@@ -1,0 +1,80 @@
+<html>
+<head>
+    <script src = "/socket.io/socket.io.js" > </script>
+    <script type=text/javascript src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script>
+        // this script section contains node.js code to interact with the main node.js script
+        // set pin identifier to photo_pin
+        var pin = 'photo_pin'; 
+        
+        // connect to websockets.  this sends the 'connect' message, which triggers the
+        // onConnect callback in the node.js file
+        var socket = io.connect();
+        
+        // this tells the webpage to be listening for a message called pinUpdate and to call
+        // handlePinUpdate when it is received.  The pinUpdate message is sent from the node.js
+        // file once an ADC value is received
+        socket.on("pinUpdate", handlePinUpdate);
+        
+        // handler for the pinUpdate message
+        function handlePinUpdate(message) 
+        {
+            // parse the JSON message to extract the data fields from the message
+            var data = JSON.parse(message);
+            // set the adc_value html variable to the adc value that was received from 
+            // the web socket message from the node.js file
+            $("#adc_value").html(" " + data.adc_value);
+        }
+        
+        // emit (send) a signal to the node.js file to indicate the desire to monitor
+        // the pin specified by the pin variable (declared above)
+        socket.emit('monitor', pin);
+        
+        // the switchUnits function is called when the SwitchUnits button is clicked
+        function switchUnits()
+        {
+            // send a switchUnits message to the node.js file
+            socket.emit('switchUnits');
+        }
+        
+        // the loadValues function is called when the Load Min/Max button is clicked
+        function loadValues()
+        {
+            // set minValue and maxValue based on the values entered by the user on the web page
+            let minValueData = $("#minValueId").val();
+            let maxValueData = $("#maxValueId").val();
+
+            // send these values to the node.js script in JSON format with a message name of loadValues
+            socket.emit('loadValues',{minValue: minValueData, maxValue: maxValueData});
+        }        
+    </script>
+</head> 
+
+<!-- Create the web display using html.  Start by setting background to gray.  To change background color, go to 
+a website that provides HTML color values where you can choose your favorite color and copy the hex value in here--> 
+<body style="background-color:#D5DBDB;font-family:Arial">
+    <!-- Print the title of the webpage at the top -->
+    <h1 style="color:black;font-size:50pt;">IoT Data Display</h1>
+    <!-- Create a table with 2 rows and 4 columns -->
+    <form id="deviceForm">
+        <table style="width:100%;background-color:black;border=1;border: 5px solid black;">
+        <tr height="50">
+            <th style="color:black;background-color:#D5DBDB;font-size:36pt;text-align:left;border=1;border: 5px solid black;">Sensor Name</th>
+            <th style="color:black;background-color:#D5DBDB;font-size:36pt;text-align:left;border=1;border: 5px solid black;">Min Value</th>
+            <th style="color:black;background-color:#D5DBDB;font-size:36pt;text-align:left;border=1;border: 5px solid black;">Max Value</th>
+            <th style="color:black;background-color:#D5DBDB;font-size:36pt;text-align:right;border=1;border: 5px solid black;">Sensor Value</th>
+        </tr>        
+        <tr height="50">
+            <td vertical-align:bottom height="50" width="25%"><h1 style="color:black;background-color:#D5DBDB;font-size:28pt;text-align:left;vertical-align:bottom;border=1;border: 5px solid black;">Photosensor</td>
+            <td vertical-align:bottom height="50" width="25%"><input type="text" name="Min Value" id="minValueId" value="0" style="background-color:#D5DBDB;color:black;font-size:28pt;text-align:top;border=1;border: 5px solid black;" maxlength="4" size="4"></td>
+            <td vertical-align:bottom height="50" width="25%"><input type="text" name="Max Value" id="maxValueId" value="0" style="background-color:#D5DBDB;color:black;font-size:28pt;text-align:top;border=1;border: 5px solid black;" maxlength="4" size="4"></td>
+            <td vertical-align:bottom height="50" width="25%"><h1 style="color:black;background-color:#D5DBDB;font-size:28pt;text-align:right;border=1;border: 5px solid black;"id="adc_value"></td>
+        </tr>        
+        </table>
+        <br>
+    </form><br>
+    <!-- Add buttons at the bottom of the display.  Pressing these buttons will trigger the function that is specified in the onclick field.
+    These functions are defined above -->
+    <input type="submit" value="Switch Units" onclick="switchUnits()" style="background-color:black;color:#D5DBDB;font-size:28pt;">
+    <input type="submit" value="Load Min/Max" onclick="loadValues()" style="background-color:black;color:#D5DBDB;font-size:28pt;">
+</body>    
